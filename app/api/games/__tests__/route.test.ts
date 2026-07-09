@@ -57,6 +57,19 @@ describe("GET /api/games", () => {
     expect(calledUrl).toContain("cc=kr");
   });
 
+  it("caps the returned games at 20 even if Steam returns more", async () => {
+    const manyItems = Array.from({ length: 25 }, (_, i) =>
+      RPG_ITEM.replace(/1086940/g, String(1000000 + i)),
+    ).join("\n");
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(steamResponse(manyItems));
+
+    const request = new Request("http://localhost/api/games?genre=전체");
+    const response = await GET(request);
+    const body = await response.json();
+
+    expect(body.games).toHaveLength(20);
+  });
+
   it("returns an error status when the Steam fetch fails", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("network down"));
 

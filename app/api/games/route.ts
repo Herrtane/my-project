@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     }
 
     const data: { results_html: string } = await steamResponse.json();
-    const games = parseSteamSearchHtml(data.results_html);
+    const games = parseSteamSearchHtml(data.results_html).slice(0, 20);
 
     return Response.json({ games });
   } catch {

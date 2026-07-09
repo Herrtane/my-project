@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "wireframe",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["vite", "artifacts/game-explorer", "--port=3456"],
+      "port": 3456
+    },
+    {
+      "name": "app",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    }
+  ]
+}
