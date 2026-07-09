@@ -1,19 +1,29 @@
-# Harness Engineering Template
+# 자~ 오늘 해볼 게임은? (Game Explorer)
 
-[![Claude Hunt](https://img.shields.io/badge/Claude_Hunt-강의-000000)](https://www.claude-hunt.com)
-[![Docs](https://img.shields.io/badge/docs-claude--hunt-2563eb)](https://docs.claude-hunt.com)
+> Steam 인기 게임을 장르별로 탐색하고, 리뷰 데이터 기반 추천 배지로 "살까 말까"를 바로 판단할 수 있게 도와주는 웹 앱.
 
-> [Claude Hunt](https://www.claude-hunt.com) 강의용 Next.js 16 + React 19 템플릿.
-> 사용법과 워크플로우 문서는 [docs.claude-hunt.com](https://docs.claude-hunt.com)에서 확인하세요.
+Steam 공식 스토어의 검색 결과를 서버에서 직접 파싱해 장르별 인기 게임 리스트를 보여주고, 게임 하나를 클릭하면 리뷰 긍정률을 기준으로 4단계 구매 추천 배지를 매겨줍니다. 별도 API 키나 로그인 없이 동작합니다.
+
+## 주요 기능
+
+- **장르 필터 15종** (Action, RPG, Horror, Roguelike, Anime 등) + **게임 이름 검색** — 두 조건을 조합해서 좁혀볼 수 있음
+- **구매 추천 배지** — 리뷰 긍정률 기준 적극 추천 / 신중히 고려 / 비추천 / 정보 부족 4단계, 가격·할인 정보와 Steam 스토어 링크 포함
+- **YouTube 트레일러 검색 링크** — 상세 모달에서 바로 연결
+- **랜덤 추천 버튼** — 현재 필터 조건 내에서 무작위로 게임 하나 선택
+- **즐겨찾기** — 로그인 없이 브라우저에 저장, 장르와 무관하게 모아보기
+- **다크모드**, 로딩/에러/빈 결과 상태 처리
 
 ## 기술 스택
 
-- **Framework**: Next.js 16 (App Router)
-- **UI**: React 19, Tailwind CSS 4, shadcn/ui, Radix UI, Base UI
+- **Framework**: Next.js 16 (App Router, Route Handler로 Steam 검색 페이지를 서버에서 프록시·파싱)
+- **UI**: React 19, Tailwind CSS 4, shadcn/ui, Radix UI
 - **Icons**: Lucide React
-- **Testing**: Vitest, Testing Library, Playwright
-- **Lint**: ESLint
+- **Testing**: Vitest, Testing Library, Playwright (90여 개 테스트)
 - **Package Manager**: Bun
+
+### 데이터 소스
+
+Steam은 이 규모의 용도에 맞는 공식 검색 API를 제공하지 않아, `store.steampowered.com`의 검색 결과 HTML을 서버(`app/api/games/route.ts`)에서 직접 fetch해 파싱합니다(`lib/steam-search-parser.ts`). 브라우저에서 직접 호출하면 CORS로 막히기 때문에 Next.js Route Handler를 프록시로 둡니다. 장르는 Steam의 태그 ID를, 검색은 `term` 파라미터를 사용하며 둘은 AND로 결합됩니다.
 
 ## 시작하기
 
@@ -60,41 +70,6 @@ Claude Code hooks 기반 자동 품질 게이트 (`.claude/settings.json`)
 
 자세한 테스팅 원칙과 Stack은 [CLAUDE.md → Testing](./CLAUDE.md#testing)을 참조합니다.
 
-## Claude Code 워크플로우
+## 개발 과정
 
-```mermaid
-flowchart LR
-    A["/idea-refine"] --> B["/write-spec"]
-    B --> C["/sketch-wireframe"]
-    C --> D["/draft-plan"]
-    D --> E["/execute-plan"]
-    E --> F["/compound"]
-```
-
-`artifacts/<feature>/spec.md`가 각 feature의 **단일 불변 계약**입니다. spec.md의 Success Criteria에서 테스트를 파생하고, 구현이 spec.md와 맞지 않으면 구현을 수정합니다.
-
-각 단계는 human review gate를 가집니다. 현재 단계가 검증되기 전에는 다음 단계로 넘어가지 않습니다.
-
-### 1. Ideate (`/idea-refine`)
-
-날것의 아이디어를 구조화된 확산적/수렴적 사고로 다듬어, 만들 가치가 있는 행동 가능한 개념으로 정리합니다. 산출물은 `artifacts/<feature>/idea.md`입니다 (선택).
-
-### 2. Specify (`/write-spec`)
-
-사용자와 대화하며 feature의 스펙을 작성합니다. 사용자 흐름을 시뮬레이션하고 빈칸을 질문으로 채운 뒤, scope/scenarios/invariants를 담은 `artifacts/<feature>/spec.md`를 생성합니다. WHAT만 기술하며 구현 결정(파일 경로, 라이브러리 등)은 포함하지 않습니다.
-
-### 3. Sketch (`/sketch-wireframe`)
-
-spec.md 기반 HTML 와이어프레임을 생성합니다. 레이아웃 검증이 목적이며, 피드백 루프를 돌려 `artifacts/<feature>/wireframe.html`에 저장합니다. UI가 포함되지 않은 feature에서는 건너뜁니다.
-
-### 4. Plan (`/draft-plan`)
-
-spec.md와 wireframe을 참조해 구현 계획을 수립합니다. vertical slicing과 의존성 순서로 TDD 기반 Task 목록을 생성하며, 각 Task의 Acceptance는 spec.md의 Success Criteria에 1:1 매핑됩니다. 산출물은 `artifacts/<feature>/plan.md`입니다.
-
-### 5. Build (`/execute-plan`)
-
-Team Lead로서 plan.md의 Task를 한 번에 하나씩 직접 구현합니다. TDD (RED → GREEN) 규율을 따르고, Task당 conventional commit 하나를 만듭니다. 완료 후 사용자에게 spec.md 대비 검증을 요청하며, 판단은 `artifacts/<feature>/decisions.md`에 Harness Signal과 함께 기록합니다.
-
-### 6. Compound (`/compound`)
-
-`decisions.md`에 누적된 판단을 읽어 반복된 패턴을 감지하고, Skill/Hook/Rule/CLAUDE.md로 승격할 후보를 제안합니다. 사용자 승인(Ask-first) 후에만 적용합니다.
+이 프로젝트는 [Claude Hunt](https://www.claude-hunt.com) 강의의 spec-driven 워크플로우(`/idea-refine` → `/write-spec` → `/sketch-wireframe` → `/draft-plan` → `/execute-plan` → `/compound`)로 만들었습니다. 아이디어 정리부터 spec, 구현 계획, 회고까지의 전체 기록은 [`artifacts/game-explorer/`](./artifacts/game-explorer/)에 있습니다.
