@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GameCard } from "@/components/game-card";
-import { useGames } from "@/hooks/use-games";
+import type { GamesStatus } from "@/hooks/use-games";
 import type { Game } from "@/types/game";
 
 interface GameGridProps {
-  genre: string;
+  games: Game[];
+  status: GamesStatus;
   onSelectGame: (game: Game) => void;
+  onRetry: () => void;
 }
 
 function GameCardSkeleton() {
@@ -30,9 +32,7 @@ function GameCardSkeleton() {
   );
 }
 
-export function GameGrid({ genre, onSelectGame }: GameGridProps) {
-  const { games, status, refetch } = useGames(genre);
-
+export function GameGrid({ games, status, onSelectGame, onRetry }: GameGridProps) {
   if (status === "loading") {
     return (
       <div className="grid grid-cols-1 gap-3 @md:grid-cols-2 @lg:grid-cols-3">
@@ -53,7 +53,7 @@ export function GameGrid({ genre, onSelectGame }: GameGridProps) {
           <EmptyTitle>게임 정보를 불러오지 못했습니다</EmptyTitle>
         </EmptyHeader>
         <EmptyContent>
-          <Button variant="outline" onClick={refetch}>
+          <Button variant="outline" onClick={onRetry}>
             다시 시도
           </Button>
         </EmptyContent>

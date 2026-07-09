@@ -86,4 +86,27 @@ describe("Page", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  it("opens a detail modal for one of the listed games when 랜덤 추천 is clicked", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ games: [game()] }),
+    });
+
+    render(<Page />);
+    await screen.findByRole("button", { name: /Counter-Strike 2/ });
+
+    await userEvent.click(screen.getByRole("button", { name: /랜덤 추천/ }));
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("Counter-Strike 2");
+  });
+
+  it("disables 랜덤 추천 while the list is loading", () => {
+    (fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(new Promise(() => {}));
+
+    render(<Page />);
+
+    expect(screen.getByRole("button", { name: /랜덤 추천/ })).toBeDisabled();
+  });
 });
