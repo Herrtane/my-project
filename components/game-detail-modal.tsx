@@ -7,7 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getRecommendationBadge } from "@/lib/recommendation-badge";
+import { formatPrice } from "@/lib/format-price";
+import {
+  getRecommendationBadge,
+  type RecommendationBadge,
+} from "@/lib/recommendation-badge";
 import type { Game } from "@/types/game";
 
 interface GameDetailModalProps {
@@ -15,17 +19,15 @@ interface GameDetailModalProps {
   onClose: () => void;
 }
 
-const BADGE_VARIANT = {
-  적극추천: "default",
-  신중히고려: "secondary",
+const BADGE_VARIANT: Record<
+  RecommendationBadge,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
+  "적극 추천": "default",
+  "신중히 고려": "secondary",
   비추천: "destructive",
-  정보부족: "outline",
-} as const;
-
-function formatPrice(value: number): string {
-  if (value === 0) return "무료";
-  return `₩${value.toLocaleString()}`;
-}
+  "정보 부족": "outline",
+};
 
 export function GameDetailModal({ game, onClose }: GameDetailModalProps) {
   if (!game) return null;

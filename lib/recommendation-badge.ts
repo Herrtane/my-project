@@ -1,4 +1,4 @@
-export type RecommendationBadge = "적극추천" | "신중히고려" | "비추천" | "정보부족";
+export type RecommendationBadge = "적극 추천" | "신중히 고려" | "비추천" | "정보 부족";
 
 const MIN_REVIEW_COUNT = 10;
 const STRONG_RECOMMEND_THRESHOLD = 80;
@@ -9,15 +9,15 @@ export function getRecommendationBadge(
   reviewCount: number,
 ): RecommendationBadge {
   if (reviewCount < MIN_REVIEW_COUNT || reviewPercent === null) {
-    return "정보부족";
+    return "정보 부족";
   }
 
   if (reviewPercent >= STRONG_RECOMMEND_THRESHOLD) {
-    return "적극추천";
+    return "적극 추천";
   }
 
   if (reviewPercent >= CONSIDER_THRESHOLD) {
-    return "신중히고려";
+    return "신중히 고려";
   }
 
   return "비추천";

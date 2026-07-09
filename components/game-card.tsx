@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { formatPrice } from "@/lib/format-price";
 import type { Game } from "@/types/game";
 
 interface GameCardProps {
@@ -11,28 +12,28 @@ interface GameCardProps {
   onSelect: (game: Game) => void;
 }
 
-function formatPrice(value: number): string {
-  if (value === 0) return "무료";
-  return `₩${value.toLocaleString()}`;
-}
-
 export function GameCard({ game, rank, onSelect }: GameCardProps) {
   return (
     <Card
       role="button"
       tabIndex={0}
+      size="sm"
       onClick={() => onSelect(game)}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") onSelect(game);
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(game);
+        }
       }}
-      className="relative cursor-pointer gap-2 overflow-hidden p-3"
+      className="relative cursor-pointer gap-2 overflow-hidden px-3"
     >
-      <Badge className="absolute top-2 left-2">{rank}</Badge>
+      <Badge className="absolute top-2 left-2 z-10">{rank}</Badge>
       <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
         <Image
           src={game.thumbnailUrl}
           alt={game.name}
           fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
           className="object-cover"
         />
       </div>

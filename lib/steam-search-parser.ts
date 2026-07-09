@@ -19,7 +19,14 @@ function parseItem(chunk: string): Game | null {
   if (!appidMatch) return null;
 
   const tagIdsMatch = chunk.match(/data-ds-tagids="(\[[^\]]*\])"/);
-  const tagIds: number[] = tagIdsMatch ? JSON.parse(tagIdsMatch[1]) : [];
+  let tagIds: number[] = [];
+  if (tagIdsMatch) {
+    try {
+      tagIds = JSON.parse(tagIdsMatch[1]);
+    } catch {
+      tagIds = [];
+    }
+  }
 
   const nameMatch = chunk.match(/class="title">([^<]*)</);
   const thumbnailMatch = chunk.match(/<img src="([^"]+)"/);
@@ -57,6 +64,12 @@ function parseItem(chunk: string): Game | null {
 export function parseSteamSearchHtml(resultsHtml: string): Game[] {
   const chunks = resultsHtml.split(/(?=<a href="https:\/\/store\.steampowered\.com\/app\/)/);
   return chunks
-    .map(parseItem)
+    .map((chunk) => {
+      try {
+        return parseItem(chunk);
+      } catch {
+        return null;
+      }
+    })
     .filter((game): game is Game => game !== null);
 }

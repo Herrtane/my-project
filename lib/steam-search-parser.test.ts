@@ -146,4 +146,28 @@ describe("parseSteamSearchHtml", () => {
     expect(games).toHaveLength(2);
     expect(games.map((g) => g.appid)).toEqual([1, 2]);
   });
+
+  it("degrades a malformed tag id list to an empty tags array instead of failing the whole batch", () => {
+    const malformed = itemHtml({
+      appid: 1,
+      name: "Malformed Game",
+      tagIds: [19],
+      priceBlock: FREE_PRICE_BLOCK,
+      reviewSpan: POSITIVE_REVIEW_SPAN,
+    }).replace('data-ds-tagids="[19]"', 'data-ds-tagids="[19,]"');
+
+    const valid = itemHtml({
+      appid: 2,
+      name: "Valid Game",
+      tagIds: [122],
+      priceBlock: NO_DISCOUNT_PRICE_BLOCK,
+      reviewSpan: MIXED_REVIEW_SPAN,
+    });
+
+    const games = parseSteamSearchHtml(malformed + valid);
+
+    expect(games).toHaveLength(2);
+    expect(games[0]).toMatchObject({ appid: 1, tags: [] });
+    expect(games[1]).toMatchObject({ appid: 2, tags: ["RPG"] });
+  });
 });

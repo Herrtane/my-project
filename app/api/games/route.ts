@@ -4,6 +4,7 @@ import { parseSteamSearchHtml } from "@/lib/steam-search-parser";
 export const revalidate = 60;
 
 const STEAM_SEARCH_URL = "https://store.steampowered.com/search/results/";
+const STEAM_FETCH_TIMEOUT_MS = 8000;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -28,9 +29,12 @@ export async function GET(request: Request) {
   try {
     const steamResponse = await fetch(url.toString(), {
       headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(STEAM_FETCH_TIMEOUT_MS),
+      next: { revalidate: 60 },
     });
 
     if (!steamResponse.ok) {
+      console.error(`Steam search request failed with status ${steamResponse.status}`);
       return Response.json({ error: "Steam request failed" }, { status: 502 });
     }
 
@@ -38,7 +42,8 @@ export async function GET(request: Request) {
     const games = parseSteamSearchHtml(data.results_html).slice(0, 20);
 
     return Response.json({ games });
-  } catch {
+  } catch (error) {
+    console.error("Steam search request failed", error);
     return Response.json({ error: "Steam request failed" }, { status: 502 });
   }
 }

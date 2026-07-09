@@ -17,11 +17,11 @@ const strongGame: Game = {
 };
 
 describe("GameDetailModal", () => {
-  it("shows 적극추천 badge, price, review percent, and a Steam link for a highly-rated game", () => {
+  it("shows 적극 추천 badge, price, review percent, and a Steam link for a highly-rated game", () => {
     render(<GameDetailModal game={strongGame} onClose={vi.fn()} />);
 
     expect(screen.getByText("Baldur's Gate 3")).toBeInTheDocument();
-    expect(screen.getByText("적극추천")).toBeInTheDocument();
+    expect(screen.getByText("적극 추천")).toBeInTheDocument();
     expect(screen.getByText(/66,000/)).toBeInTheDocument();
     expect(screen.getByText(/96%/)).toBeInTheDocument();
 
@@ -44,7 +44,7 @@ describe("GameDetailModal", () => {
     expect(screen.getByText("비추천")).toBeInTheDocument();
   });
 
-  it("shows 정보부족 badge when there are too few reviews", () => {
+  it("shows 정보 부족 badge when there are too few reviews", () => {
     render(
       <GameDetailModal
         game={{ ...strongGame, reviewPercent: null, reviewCount: 3 }}
@@ -52,7 +52,7 @@ describe("GameDetailModal", () => {
       />,
     );
 
-    expect(screen.getByText("정보부족")).toBeInTheDocument();
+    expect(screen.getByText("정보 부족")).toBeInTheDocument();
   });
 
   it("renders nothing when game is null", () => {
@@ -66,6 +66,30 @@ describe("GameDetailModal", () => {
     render(<GameDetailModal game={strongGame} onClose={onClose} />);
 
     await userEvent.click(screen.getByRole("button", { name: /close/i }));
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("calls onClose when the Escape key is pressed", async () => {
+    const onClose = vi.fn();
+    render(<GameDetailModal game={strongGame} onClose={onClose} />);
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("calls onClose when the overlay outside the dialog is clicked", async () => {
+    const onClose = vi.fn();
+    const { container } = render(
+      <GameDetailModal game={strongGame} onClose={onClose} />,
+    );
+
+    const overlay = container.ownerDocument.querySelector(
+      '[data-slot="dialog-overlay"]',
+    );
+    expect(overlay).not.toBeNull();
+    await userEvent.click(overlay as Element);
 
     expect(onClose).toHaveBeenCalled();
   });

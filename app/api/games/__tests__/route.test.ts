@@ -70,6 +70,19 @@ describe("GET /api/games", () => {
     expect(body.games).toHaveLength(20);
   });
 
+  it("requests Steam with a revalidate cache option and an abort signal", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(steamResponse(RPG_ITEM));
+
+    const request = new Request("http://localhost/api/games?genre=전체");
+    await GET(request);
+
+    const options = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit & {
+      next?: { revalidate: number };
+    };
+    expect(options.next).toEqual({ revalidate: 60 });
+    expect(options.signal).toBeInstanceOf(AbortSignal);
+  });
+
   it("returns an error status when the Steam fetch fails", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("network down"));
 
