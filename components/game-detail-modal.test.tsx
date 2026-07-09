@@ -31,6 +31,13 @@ describe("GameDetailModal", () => {
       "https://store.steampowered.com/app/1086940",
     );
     expect(link).toHaveAttribute("target", "_blank");
+
+    const youtubeLink = screen.getByRole("link", { name: /YouTube/ });
+    expect(youtubeLink).toHaveAttribute(
+      "href",
+      "https://www.youtube.com/results?search_query=Baldur's+Gate+3+trailer",
+    );
+    expect(youtubeLink).toHaveAttribute("target", "_blank");
   });
 
   it("shows 비추천 badge for a low review percent", () => {

@@ -12,6 +12,7 @@ import {
   getRecommendationBadge,
   type RecommendationBadge,
 } from "@/lib/recommendation-badge";
+import { buildYoutubeSearchUrl } from "@/lib/youtube-search-url";
 import type { Game } from "@/types/game";
 
 interface GameDetailModalProps {
@@ -63,6 +64,14 @@ export function GameDetailModal({ game, onClose }: GameDetailModalProps) {
           className="text-sm text-primary underline underline-offset-4"
         >
           Steam에서 보기
+        </a>
+        <a
+          href={buildYoutubeSearchUrl(game.name)}
+          target="_blank"
+          rel="noreferrer"
+          className="text-sm text-primary underline underline-offset-4"
+        >
+          YouTube에서 트레일러 찾기
         </a>
       </DialogContent>
     </Dialog>
