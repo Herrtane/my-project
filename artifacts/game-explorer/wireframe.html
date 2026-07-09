@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe: game-explorer</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --w-bg: #f5f5f5;
+    --w-border: #ccc;
+    --w-text: #555;
+    --w-muted: #aaa;
+    --w-fill: #eee;
+  }
+
+  * {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--w-text);
+  }
+
+  body { background: var(--w-bg); }
+
+  /* Screen nav */
+  nav { position: sticky; top: 0; z-index: 40; background: var(--w-bg); border-bottom: 1px solid var(--w-border); }
+  nav button { cursor: pointer; font-size: 13px; }
+  nav button:hover { background: var(--w-fill); border-radius: 4px; }
+  nav button.active { font-weight: bold; border-bottom: 2px solid var(--w-text); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Viewport toggle */
+  .vp-toggle button {
+    font-size: 12px; padding: 2px 8px;
+    border: 1px solid var(--w-border); cursor: pointer; background: white;
+  }
+  .vp-toggle button:first-child { border-radius: 4px 0 0 4px; }
+  .vp-toggle button:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+  .vp-toggle button.active { background: var(--w-text); color: white; }
+
+  /* Mobile viewport frame */
+  body.viewport-mobile .screen-content {
+    max-width: 375px !important;
+    margin: 24px auto !important;
+    border: 2px solid var(--w-border);
+    border-radius: 24px;
+    min-height: 667px;
+    background: white;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 32px 16px !important;
+  }
+
+  /* Screen Notes */
+  .screen-notes {
+    background: #fffde7;
+    border-left: 3px solid #ffd54f;
+    padding: 12px 16px;
+    margin-top: 24px;
+    font-size: 13px;
+    border-radius: 0 4px 4px 0;
+  }
+  .screen-notes summary {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+    color: #b0a050;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .screen-notes p { margin: 6px 0 2px; color: #777; }
+  .screen-notes ul { margin: 4px 0 0 16px; padding: 0; color: #777; }
+  .screen-notes li { margin: 2px 0; }
+
+  /* Custom wireframe-only helpers */
+  .w-chip {
+    border: 1px solid var(--w-border);
+    background: white;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .w-chip.w-chip-active {
+    background: var(--w-text);
+    color: white;
+    border-color: var(--w-text);
+  }
+  .w-thumb {
+    background: var(--w-fill);
+    border: 1px solid var(--w-border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--w-muted);
+  }
+  .w-card {
+    border: 1px solid var(--w-border);
+    border-radius: 8px;
+    background: white;
+    padding: 10px;
+    position: relative;
+  }
+  .w-rank {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: var(--w-text);
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    z-index: 1;
+  }
+  .w-tag {
+    border: 1px solid var(--w-border);
+    border-radius: 4px;
+    font-size: 10px;
+    padding: 1px 6px;
+    color: var(--w-muted);
+  }
+  .w-skeleton {
+    background: var(--w-fill);
+    border-radius: 4px;
+    animation: w-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes w-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .w-overlay {
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .w-modal {
+    background: white;
+    border: 1px solid var(--w-border);
+    border-radius: 12px 12px 0 0;
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+    position: relative;
+  }
+  .w-badge {
+    display: inline-block;
+    border: 2px solid var(--w-text);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: bold;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body class="p-0 m-0 viewport-mobile">
+
+<nav class="flex items-center gap-4 px-6 py-2 flex-wrap">
+  <span class="text-xs" style="color:var(--w-muted)">wireframe</span>
+  <button id="nav-0" onclick="show(0)" class="px-2 py-1">목록·전체</button>
+  <button id="nav-1" onclick="show(1)" class="px-2 py-1">목록·필터(RPG)</button>
+  <button id="nav-2" onclick="show(2)" class="px-2 py-1">목록·결과없음</button>
+  <button id="nav-3" onclick="show(3)" class="px-2 py-1">목록·로딩</button>
+  <button id="nav-4" onclick="show(4)" class="px-2 py-1">목록·에러</button>
+  <button id="nav-5" onclick="show(5)" class="px-2 py-1">모달·적극추천</button>
+  <button id="nav-6" onclick="show(6)" class="px-2 py-1">모달·비추천</button>
+  <div class="vp-toggle flex ml-auto">
+    <button id="vp-desktop" onclick="setViewport('desktop')">Desktop</button>
+    <button id="vp-mobile" onclick="setViewport('mobile')" class="active">Mobile</button>
+  </div>
+</nav>
+
+<!-- Screen 0: 목록 - 전체 (기본 진입, Scenario 1) -->
+<div id="screen-0" class="screen" data-scenario="1">
+  <div class="screen-content @container max-w-6xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      목록 화면 — 전체 (기본)
+    </h2>
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-bold text-base">게임 탐색기</span>
+      <button class="w-thumb" style="width:32px;height:32px;border-radius:999px;">
+        <i data-lucide="moon" style="width:16px;height:16px;"></i>
+      </button>
+    </div>
+
+    <!-- Filter chips -->
+    <div class="flex gap-2 overflow-x-auto @md:flex-wrap @md:overflow-visible mb-4 pb-1">
+      <span class="w-chip w-chip-active">전체</span>
+      <span class="w-chip">Action</span>
+      <span class="w-chip">RPG</span>
+      <span class="w-chip">Indie</span>
+      <span class="w-chip">Strategy</span>
+      <span class="w-chip">Simulation</span>
+      <span class="w-chip">Adventure</span>
+      <span class="w-chip">Sports</span>
+      <span class="w-chip">Racing</span>
+    </div>
+
+    <!-- Card grid -->
+    <div class="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 gap-3">
+      <!-- Card 1 -->
+      <div class="w-card">
+        <span class="w-rank">1</span>
+        <div class="w-thumb mb-2" style="height:90px;">
+          <i data-lucide="image" style="width:20px;height:20px;"></i>
+        </div>
+        <div class="text-sm font-bold mb-1">Counter-Strike 2</div>
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span>무료</span>
+          <span>긍정 86%</span>
+        </div>
+        <div class="flex gap-1 flex-wrap">
+          <span class="w-tag">Action</span>
+          <span class="w-tag">FPS</span>
+        </div>
+      </div>
+      <!-- Card 2 -->
+      <div class="w-card">
+        <span class="w-rank">2</span>
+        <div class="w-thumb mb-2" style="height:90px;">
+          <i data-lucide="image" style="width:20px;height:20px;"></i>
+        </div>
+        <div class="text-sm font-bold mb-1">Palworld</div>
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span><s>₩32,000</s> ₩22,400 (30%)</span>
+          <span>긍정 94%</span>
+        </div>
+        <div class="flex gap-1 flex-wrap">
+          <span class="w-tag">Action</span>
+          <span class="w-tag">Adventure</span>
+        </div>
+      </div>
+      <!-- Card 3 -->
+      <div class="w-card">
+        <span class="w-rank">3</span>
+        <div class="w-thumb mb-2" style="height:90px;">
+          <i data-lucide="image" style="width:20px;height:20px;"></i>
+        </div>
+        <div class="text-sm font-bold mb-1">PUBG: BATTLEGROUNDS</div>
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span>무료</span>
+          <span>긍정 59%</span>
+        </div>
+        <div class="flex gap-1 flex-wrap">
+          <span class="w-tag">Action</span>
+          <span class="w-tag">Shooter</span>
+        </div>
+      </div>
+      <!-- Card 4 (placeholder to show grid continuation) -->
+      <div class="w-card">
+        <span class="w-rank">4</span>
+        <div class="w-thumb mb-2" style="height:90px;">
+          <i data-lucide="image" style="width:20px;height:20px;"></i>
+        </div>
+        <div class="text-sm font-bold mb-1">... (최대 20위까지)</div>
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span>—</span>
+          <span>—</span>
+        </div>
+        <div class="flex gap-1 flex-wrap">
+          <span class="w-tag">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>목록 화면의 기본 레이아웃. 필터/카드 그리드 배치를 검증하는 base screen.</p>
+        <ul>
+          <li>트리거: 사이트 첫 진입, "전체" 칩이 기본 선택 상태</li>
+          <li>인터랙션: 필터 칩 클릭 → 목록·필터(RPG) 화면처럼 카드 교체 / 카드 클릭 → 모달·적극추천 화면처럼 상세 오픈 / 우상단 아이콘 클릭 → 다크모드 전환 (레이아웃 변화 없음, 색만 반전)</li>
+          <li>전환: 카드는 최대 20개까지 순위 번호와 함께 나열됨 (여기서는 지면상 일부만 표시)</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 1: 목록 - 필터(RPG) 적용 (Scenario 2) -->
+<div id="screen-1" class="screen" data-scenario="2">
+  <div class="screen-content @container max-w-6xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      목록 화면 — RPG 필터 적용
+    </h2>
+
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-bold text-base">게임 탐색기</span>
+      <button class="w-thumb" style="width:32px;height:32px;border-radius:999px;">
+        <i data-lucide="moon" style="width:16px;height:16px;"></i>
+      </button>
+    </div>
+
+    <div class="flex gap-2 overflow-x-auto @md:flex-wrap @md:overflow-visible mb-4 pb-1">
+      <span class="w-chip">전체</span>
+      <span class="w-chip">Action</span>
+      <span class="w-chip w-chip-active">RPG</span>
+      <span class="w-chip">Indie</span>
+      <span class="w-chip">Strategy</span>
+      <span class="w-chip">Simulation</span>
+      <span class="w-chip">Adventure</span>
+      <span class="w-chip">Sports</span>
+      <span class="w-chip">Racing</span>
+    </div>
+
+    <div class="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 gap-3">
+      <div class="w-card">
+        <span class="w-rank">1</span>
+        <div class="w-thumb mb-2" style="height:90px;"><i data-lucide="image" style="width:20px;height:20px;"></i></div>
+        <div class="text-sm font-bold mb-1">Baldur's Gate 3</div>
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span>₩64,800</span>
+          <span>긍정 96%</span>
+        </div>
+        <div class="flex gap-1 flex-wrap">
+          <span class="w-tag">RPG</span>
+          <span class="w-tag">Story Rich</span>
+        </div>
+      </div>
+      <div class="w-card">
+        <span class="w-rank">2</span>
+        <div class="w-thumb mb-2" style="height:90px;"><i data-lucide="image" style="width:20px;height:20px;"></i></div>
+        <div class="text-sm font-bold mb-1">Elden Ring</div>
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span><s>₩79,000</s> ₩39,500 (50%)</span>
+          <span>긍정 92%</span>
+        </div>
+        <div class="flex gap-1 flex-wrap">
+          <span class="w-tag">RPG</span>
+          <span class="w-tag">Souls-like</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>목록·전체와 레이아웃은 동일, 선택된 칩과 카드 데이터만 교체됨을 보여주는 상태 화면.</p>
+        <ul>
+          <li>트리거: 사용자가 "RPG" 칩 클릭</li>
+          <li>인터랙션: 다른 칩 클릭 시 다시 그 장르로 즉시 교체 (선택 표시는 항상 하나만 활성)</li>
+          <li>전환: 카드 클릭 시 상세 모달로 이동 (레이아웃은 모달·적극추천/비추천 화면 참조)</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 2: 목록 - 결과 없음 (Scenario 3) -->
+<div id="screen-2" class="screen" data-scenario="3">
+  <div class="screen-content @container max-w-6xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      목록 화면 — 필터링 결과 없음
+    </h2>
+
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-bold text-base">게임 탐색기</span>
+      <button class="w-thumb" style="width:32px;height:32px;border-radius:999px;">
+        <i data-lucide="moon" style="width:16px;height:16px;"></i>
+      </button>
+    </div>
+
+    <div class="flex gap-2 overflow-x-auto @md:flex-wrap @md:overflow-visible mb-4 pb-1">
+      <span class="w-chip">전체</span>
+      <span class="w-chip">Action</span>
+      <span class="w-chip">RPG</span>
+      <span class="w-chip w-chip-active">Racing</span>
+      <span class="w-chip">Simulation</span>
+      <span class="w-chip">Adventure</span>
+      <span class="w-chip">Sports</span>
+    </div>
+
+    <div class="flex flex-col items-center justify-center text-center py-16 gap-3" style="border:1px dashed var(--w-border); border-radius:8px;">
+      <i data-lucide="search-x" style="width:28px;height:28px;color:var(--w-muted);"></i>
+      <div class="text-sm">해당 장르의 게임을 찾지 못했습니다.<br>다른 장르를 선택해보세요.</div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>필터 조회 결과가 0개일 때 카드 그리드 대신 노출되는 안내 블록.</p>
+        <ul>
+          <li>트리거: 선택한 필터에 매칭되는 게임이 0개로 응답됨</li>
+          <li>인터랙션: 다른 필터 칩 클릭 시 다시 목록 조회 시도</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 3: 목록 - 로딩 (Scenario 7, loading) -->
+<div id="screen-3" class="screen" data-scenario="7">
+  <div class="screen-content @container max-w-6xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      목록 화면 — 로딩 중
+    </h2>
+
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-bold text-base">게임 탐색기</span>
+      <button class="w-thumb" style="width:32px;height:32px;border-radius:999px;">
+        <i data-lucide="moon" style="width:16px;height:16px;"></i>
+      </button>
+    </div>
+
+    <div class="flex gap-2 overflow-x-auto @md:flex-wrap @md:overflow-visible mb-4 pb-1">
+      <span class="w-chip w-chip-active">전체</span>
+      <span class="w-chip">Action</span>
+      <span class="w-chip">RPG</span>
+      <span class="w-chip">Indie</span>
+    </div>
+
+    <div class="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 gap-3">
+      <div class="w-card">
+        <div class="w-skeleton mb-2" style="height:90px;"></div>
+        <div class="w-skeleton mb-1" style="height:14px;width:70%;"></div>
+        <div class="w-skeleton" style="height:10px;width:40%;"></div>
+      </div>
+      <div class="w-card">
+        <div class="w-skeleton mb-2" style="height:90px;"></div>
+        <div class="w-skeleton mb-1" style="height:14px;width:70%;"></div>
+        <div class="w-skeleton" style="height:10px;width:40%;"></div>
+      </div>
+      <div class="w-card">
+        <div class="w-skeleton mb-2" style="height:90px;"></div>
+        <div class="w-skeleton mb-1" style="height:14px;width:70%;"></div>
+        <div class="w-skeleton" style="height:10px;width:40%;"></div>
+      </div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>데이터 요청이 진행 중일 때 카드 자리에 표시되는 스켈레톤 상태.</p>
+        <ul>
+          <li>트리거: 최초 진입 또는 필터 변경 직후, 응답 도착 전까지</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 4: 목록 - 조회 실패 (Scenario 7, error) -->
+<div id="screen-4" class="screen" data-scenario="7">
+  <div class="screen-content @container max-w-6xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      목록 화면 — 조회 실패
+    </h2>
+
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-bold text-base">게임 탐색기</span>
+      <button class="w-thumb" style="width:32px;height:32px;border-radius:999px;">
+        <i data-lucide="moon" style="width:16px;height:16px;"></i>
+      </button>
+    </div>
+
+    <div class="flex gap-2 overflow-x-auto @md:flex-wrap @md:overflow-visible mb-4 pb-1">
+      <span class="w-chip w-chip-active">전체</span>
+      <span class="w-chip">Action</span>
+      <span class="w-chip">RPG</span>
+    </div>
+
+    <div class="flex flex-col items-center justify-center text-center py-16 gap-3" style="border:1px solid var(--w-border); border-radius:8px;">
+      <i data-lucide="alert-triangle" style="width:28px;height:28px;color:var(--w-muted);"></i>
+      <div class="text-sm">게임 정보를 불러오지 못했습니다.</div>
+      <button class="w-chip">다시 시도</button>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>데이터 요청이 실패로 응답했을 때의 상태.</p>
+        <ul>
+          <li>트리거: API 요청 실패</li>
+          <li>인터랙션: "다시 시도" 버튼 클릭 → 같은 필터로 재요청, 성공 시 목록 화면으로 전환</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 5: 상세 모달 - 적극 추천 (Scenario 4, 80%+) -->
+<div id="screen-5" class="screen" data-scenario="4, 6">
+  <div class="screen-content @container max-w-6xl mx-auto p-6" style="position:relative; min-height:600px;">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      상세 모달 — 적극 추천 배지
+    </h2>
+
+    <!-- Background list (dimmed context) -->
+    <div class="grid grid-cols-1 @md:grid-cols-3 gap-3 opacity-40">
+      <div class="w-card"><div class="w-thumb" style="height:70px;"></div></div>
+      <div class="w-card"><div class="w-thumb" style="height:70px;"></div></div>
+      <div class="w-card"><div class="w-thumb" style="height:70px;"></div></div>
+    </div>
+
+    <!-- Modal overlay -->
+    <div class="w-overlay" style="position:absolute; inset:0;">
+      <div class="w-modal">
+        <button style="position:absolute; top:12px; right:12px;">
+          <i data-lucide="x" style="width:18px;height:18px;"></i>
+        </button>
+        <div class="w-thumb mb-3" style="height:120px;"><i data-lucide="image" style="width:24px;height:24px;"></i></div>
+        <div class="font-bold text-base mb-2">Baldur's Gate 3</div>
+        <div class="w-badge mb-3">✓ 적극 추천</div>
+        <div class="text-sm mb-1">가격: ₩64,800 (할인 없음)</div>
+        <div class="text-sm mb-3">리뷰 긍정률: 96%</div>
+        <button class="w-chip flex items-center gap-1" style="width:fit-content;">
+          <i data-lucide="external-link" style="width:12px;height:12px;"></i> Steam에서 보기
+        </button>
+      </div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>목록 화면에서 카드 클릭 시 하단에서 올라오는 상세 모달. 리뷰 긍정률 80% 이상 케이스.</p>
+        <ul>
+          <li>트리거: 목록의 게임 카드 클릭</li>
+          <li>인터랙션: X 버튼 / 모달 바깥(어둡게 처리된 영역) 클릭 / ESC 키 → 모달 닫힘, 목록 화면으로 복귀 (Scenario 5) / "Steam에서 보기" 클릭 → 새 탭에서 Steam 스토어 페이지로 이동 (Scenario 6)</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 6: 상세 모달 - 비추천 / 기타 배지 (Scenario 4, remaining badge states) -->
+<div id="screen-6" class="screen" data-scenario="4">
+  <div class="screen-content @container max-w-6xl mx-auto p-6" style="position:relative; min-height:600px;">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      상세 모달 — 비추천 배지 (신중히 고려 / 정보 부족 동일 레이아웃)
+    </h2>
+
+    <div class="grid grid-cols-1 @md:grid-cols-3 gap-3 opacity-40">
+      <div class="w-card"><div class="w-thumb" style="height:70px;"></div></div>
+      <div class="w-card"><div class="w-thumb" style="height:70px;"></div></div>
+      <div class="w-card"><div class="w-thumb" style="height:70px;"></div></div>
+    </div>
+
+    <div class="w-overlay" style="position:absolute; inset:0;">
+      <div class="w-modal">
+        <button style="position:absolute; top:12px; right:12px;">
+          <i data-lucide="x" style="width:18px;height:18px;"></i>
+        </button>
+        <div class="w-thumb mb-3" style="height:120px;"><i data-lucide="image" style="width:24px;height:24px;"></i></div>
+        <div class="font-bold text-base mb-2">Some Mixed-Review Game</div>
+        <div class="w-badge mb-3">✕ 비추천</div>
+        <div class="text-sm mb-1">가격: <s>₩29,000</s> ₩14,500 (50%)</div>
+        <div class="text-sm mb-3">리뷰 긍정률: 41%</div>
+        <button class="w-chip flex items-center gap-1" style="width:fit-content;">
+          <i data-lucide="external-link" style="width:12px;height:12px;"></i> Steam에서 보기
+        </button>
+      </div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>모달·적극추천과 동일한 레이아웃, 배지 텍스트만 교체됨. "신중히 고려"(50~79%), "정보 부족"(리뷰 수 부족) 배지도 같은 자리에 라벨만 바뀌어 표시된다.</p>
+        <ul>
+          <li>트리거: 리뷰 긍정률 50% 미만 게임 카드 클릭</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var currentScreen = 0;
+var screenIds = [];
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('nav-' + id).classList.add('active');
+  currentScreen = screenIds.indexOf(id);
+}
+
+function setViewport(mode) {
+  document.body.classList.remove('viewport-mobile', 'viewport-desktop');
+  document.body.classList.add('viewport-' + mode);
+  document.querySelectorAll('.vp-toggle button').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('vp-' + mode).classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) {
+    screenIds.push(parseInt(b.id.replace('nav-', '')));
+  });
+  var first = document.querySelector('nav button[id^="nav-"]');
+  if (first) first.click();
+  lucide.createIcons();
+});
+</script>
+</body>
+</html>
