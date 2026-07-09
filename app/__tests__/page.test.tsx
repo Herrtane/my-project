@@ -66,4 +66,24 @@ describe("Page", () => {
       "true",
     );
   });
+
+  it("opens a detail modal with the same review percent shown on the card, then closes it", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ games: [game({ reviewPercent: 88 })] }),
+    });
+
+    render(<Page />);
+    const card = await screen.findByRole("button", { name: /Counter-Strike 2/ });
+    expect(card).toHaveTextContent("88%");
+
+    await userEvent.click(card);
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("88%");
+
+    await userEvent.click(screen.getByRole("button", { name: /close/i }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
 });
