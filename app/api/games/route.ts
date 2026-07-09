@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   url.searchParams.set("supportedlang", "english");
   url.searchParams.set("json", "1");
   url.searchParams.set("infinite", "1");
-  url.searchParams.set("count", "20");
+  url.searchParams.set("count", "50");
 
   try {
     const steamResponse = await fetch(url.toString(), {
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     }
 
     const data: { results_html: string } = await steamResponse.json();
-    const games = parseSteamSearchHtml(data.results_html).slice(0, 20);
+    const games = parseSteamSearchHtml(data.results_html).slice(0, 50);
 
     return Response.json({ games });
   } catch (error) {

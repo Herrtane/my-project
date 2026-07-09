@@ -57,8 +57,8 @@ describe("GET /api/games", () => {
     expect(calledUrl).toContain("cc=kr");
   });
 
-  it("caps the returned games at 20 even if Steam returns more", async () => {
-    const manyItems = Array.from({ length: 25 }, (_, i) =>
+  it("caps the returned games at 50 even if Steam returns more", async () => {
+    const manyItems = Array.from({ length: 60 }, (_, i) =>
       RPG_ITEM.replace(/1086940/g, String(1000000 + i)),
     ).join("\n");
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(steamResponse(manyItems));
@@ -67,7 +67,17 @@ describe("GET /api/games", () => {
     const response = await GET(request);
     const body = await response.json();
 
-    expect(body.games).toHaveLength(20);
+    expect(body.games).toHaveLength(50);
+  });
+
+  it("requests 50 items from Steam", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(steamResponse(RPG_ITEM));
+
+    const request = new Request("http://localhost/api/games?genre=전체");
+    await GET(request);
+
+    const calledUrl = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(calledUrl).toContain("count=50");
   });
 
   it("requests Steam with a revalidate cache option and an abort signal", async () => {

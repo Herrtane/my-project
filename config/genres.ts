@@ -13,6 +13,12 @@ export const GENRES: GenreOption[] = [
   { label: "Adventure", steamTagId: 21 },
   { label: "Sports", steamTagId: 701 },
   { label: "Racing", steamTagId: 699 },
+  { label: "Puzzle", steamTagId: 1664 },
+  { label: "Horror", steamTagId: 1667 },
+  { label: "Fighting", steamTagId: 1743 },
+  { label: "Platformer", steamTagId: 1625 },
+  { label: "Roguelike", steamTagId: 1716 },
+  { label: "Anime", steamTagId: 4085 },
 ];
 
 export const GENRE_BY_TAG_ID: Record<number, string> = GENRES.reduce(
