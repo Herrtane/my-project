@@ -11,7 +11,7 @@ interface UseGamesResult {
   refetch: () => void;
 }
 
-export function useGames(genre: string): UseGamesResult {
+export function useGames(genre: string, search: string = ""): UseGamesResult {
   const [games, setGames] = useState<Game[]>([]);
   const [status, setStatus] = useState<GamesStatus>("loading");
   const [attempt, setAttempt] = useState(0);
@@ -20,7 +20,12 @@ export function useGames(genre: string): UseGamesResult {
     let cancelled = false;
     setStatus("loading");
 
-    fetch(`/api/games?genre=${encodeURIComponent(genre)}`)
+    const params = new URLSearchParams({ genre });
+    if (search.trim()) {
+      params.set("search", search.trim());
+    }
+
+    fetch(`/api/games?${params.toString()}`)
       .then((res) => {
         if (!res.ok) throw new Error("request failed");
         return res.json();
@@ -38,7 +43,7 @@ export function useGames(genre: string): UseGamesResult {
     return () => {
       cancelled = true;
     };
-  }, [genre, attempt]);
+  }, [genre, search, attempt]);
 
   const refetch = useCallback(() => setAttempt((a) => a + 1), []);
 

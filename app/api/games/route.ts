@@ -15,9 +15,14 @@ export async function GET(request: Request) {
     return Response.json({ error: "Unknown genre" }, { status: 400 });
   }
 
+  const search = searchParams.get("search")?.trim();
+
   const url = new URL(STEAM_SEARCH_URL);
   if (genre.steamTagId !== null) {
     url.searchParams.set("tags", String(genre.steamTagId));
+  }
+  if (search) {
+    url.searchParams.set("term", search);
   }
   url.searchParams.set("category1", "998");
   url.searchParams.set("cc", "kr");

@@ -67,4 +67,28 @@ describe("useGames", () => {
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
     expect((fetch as ReturnType<typeof vi.fn>).mock.calls[1][0]).toContain("genre=RPG");
   });
+
+  it("includes a search query param when search text is provided", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: async () => ({ games: [] }),
+    });
+
+    renderHook(() => useGames("전체", "elden"));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("search=elden");
+  });
+
+  it("omits the search query param when search text is empty", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: async () => ({ games: [] }),
+    });
+
+    renderHook(() => useGames("전체", ""));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).not.toContain("search=");
+  });
 });

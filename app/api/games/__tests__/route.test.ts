@@ -83,6 +83,27 @@ describe("GET /api/games", () => {
     expect(options.signal).toBeInstanceOf(AbortSignal);
   });
 
+  it("forwards a search query param to Steam as term, combined with the genre tag", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(steamResponse(RPG_ITEM));
+
+    const request = new Request("http://localhost/api/games?genre=RPG&search=diablo");
+    await GET(request);
+
+    const calledUrl = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(calledUrl).toContain("term=diablo");
+    expect(calledUrl).toContain("tags=122");
+  });
+
+  it("omits the term param when search is absent", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(steamResponse(RPG_ITEM));
+
+    const request = new Request("http://localhost/api/games?genre=전체");
+    await GET(request);
+
+    const calledUrl = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(calledUrl).not.toContain("term=");
+  });
+
   it("returns an error status when the Steam fetch fails", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("network down"));
 

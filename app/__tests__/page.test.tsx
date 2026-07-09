@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Page from "../page";
@@ -108,5 +108,28 @@ describe("Page", () => {
     render(<Page />);
 
     expect(screen.getByRole("button", { name: /랜덤 추천/ })).toBeDisabled();
+  });
+
+  it("re-fetches with the search term (debounced) and keeps the current genre", async () => {
+    (fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ games: [game({ name: "Counter-Strike 2" })] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ games: [game({ appid: 9, name: "Elden Ring" })] }),
+      });
+
+    render(<Page />);
+    await screen.findByText("Counter-Strike 2");
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "elden" } });
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    const secondCallUrl = (fetch as ReturnType<typeof vi.fn>).mock.calls[1][0] as string;
+    expect(secondCallUrl).toContain("search=elden");
+    expect(secondCallUrl).toContain(`genre=${encodeURIComponent("전체")}`);
+    expect(await screen.findByText("Elden Ring")).toBeInTheDocument();
   });
 });
