@@ -29,7 +29,7 @@ export default function Page() {
   return (
     <div className="@container mx-auto max-w-6xl p-6">
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-base font-bold">게임 탐색기</span>
+        <span className="text-base font-bold">자~ 오늘 해볼 게임은?</span>
         <div className="flex items-center gap-2">
           <FavoritesToggle
             count={favorites.length}

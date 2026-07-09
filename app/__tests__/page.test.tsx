@@ -37,7 +37,7 @@ describe("Page", () => {
 
     render(<Page />);
 
-    expect(screen.getByText("게임 탐색기")).toBeInTheDocument();
+    expect(screen.getByText("자~ 오늘 해볼 게임은?")).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "전체" })).toHaveAttribute(
       "aria-checked",
       "true",
