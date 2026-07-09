@@ -63,7 +63,7 @@ function parseItem(chunk: string): Game | null {
 
 export function parseSteamSearchHtml(resultsHtml: string): Game[] {
   const chunks = resultsHtml.split(/(?=<a href="https:\/\/store\.steampowered\.com\/app\/)/);
-  return chunks
+  const games = chunks
     .map((chunk) => {
       try {
         return parseItem(chunk);
@@ -72,4 +72,11 @@ export function parseSteamSearchHtml(resultsHtml: string): Game[] {
       }
     })
     .filter((game): game is Game => game !== null);
+
+  const seenAppids = new Set<number>();
+  return games.filter((game) => {
+    if (seenAppids.has(game.appid)) return false;
+    seenAppids.add(game.appid);
+    return true;
+  });
 }

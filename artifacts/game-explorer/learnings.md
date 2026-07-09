@@ -57,3 +57,13 @@ applied: not-yet
 **상황**: code-reviewer 검토에서 발견. `lib/steam-search-parser.ts`가 `results_html`을 항목별로 쪼갠 뒤 `.map(parseItem)`으로 한 번에 처리했는데, 단 하나의 항목이라도 `data-ds-tagids`가 유효하지 않은 JSON이면 `JSON.parse` 예외가 상위로 전파되어 `app/api/games/route.ts`의 catch가 잡고 **응답 전체를 502로 만들었다** — 19개가 정상이어도 1개 때문에 전부 빈 화면.
 **판단**: 리스크가 있는 필드(`tagIds`)는 개별 try/catch로 감싸 실패 시 안전한 기본값(`[]`)으로 낮추고, `parseSteamSearchHtml`의 `.map` 콜백에도 항목 단위 try/catch를 한 겹 더 둬 예상 못한 다른 실패도 해당 항목만 제외되게 함.
 **다시 마주칠 가능성**: 중간 — 외부 소스(API 응답, 파일 업로드 등)를 배열 단위로 파싱하는 다른 feature에서도 일반화 가능한 패턴("한 항목의 실패 ≠ 전체 실패").
+
+---
+category: escalation
+applied: not-yet
+---
+## Steam 검색 결과에 같은 appid가 중복으로 나타날 수 있다
+
+**상황**: 사용자가 브라우저에서 Puzzle 장르를 클릭했을 때 React "두 자식이 같은 key `1426210`" 콘솔 에러를 직접 발견해서 보고함. 실측해보니 Steam이 "It Takes Two"(베이스 게임)와 "It Takes Two Friend's Pass"(친구 초대용 무료 에디션)를 **같은 appid**로 검색 결과에 두 번 노출하고 있었다. Task 11에서 `count`를 20→50으로 늘리면서(니치한 장르일수록 이런 이례적인 리스팅이 결과에 포함될 확률이 커짐) 처음 드러남 — 20개 규모에서는 안 보였던 문제.
+**판단**: `lib/steam-search-parser.ts`의 `parseSteamSearchHtml`이 반환하기 전에 appid 기준으로 dedupe하도록 수정(첫 번째 등장만 유지). spec.md 불변 규칙에 "중복 없음"을 추가하고 회귀 테스트도 추가. 이 수정 자체가 코드에 박힌 영구적인 방어라 별도 프로세스 규칙 파일은 만들지 않음.
+**다시 마주칠 가능성**: 높음(같은 현상 재발) / 낮음(사용자에게 드러날 가능성 — 이미 파서에서 구조적으로 막아뒀음). "외부 API가 반환하는 목록에서 고유 식별자 유일성을 가정하지 않고 항상 dedupe한다"는 원칙은 다른 feature에서도 재발하면 `.claude/rules/`로 승격할 후보.

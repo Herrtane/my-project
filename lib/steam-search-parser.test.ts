@@ -170,4 +170,35 @@ describe("parseSteamSearchHtml", () => {
     expect(games[0]).toMatchObject({ appid: 1, tags: [] });
     expect(games[1]).toMatchObject({ appid: 2, tags: ["RPG"] });
   });
+
+  it("de-duplicates items that share the same appid (e.g. base game + Friend's Pass listing)", () => {
+    const html =
+      itemHtml({
+        appid: 1426210,
+        name: "It Takes Two",
+        tagIds: [19],
+        priceBlock: NO_DISCOUNT_PRICE_BLOCK,
+        reviewSpan: POSITIVE_REVIEW_SPAN,
+      }) +
+      itemHtml({
+        appid: 1426210,
+        name: "It Takes Two Friend's Pass",
+        tagIds: [19],
+        priceBlock: FREE_PRICE_BLOCK,
+        reviewSpan: POSITIVE_REVIEW_SPAN,
+      }) +
+      itemHtml({
+        appid: 2,
+        name: "Game Two",
+        tagIds: [122],
+        priceBlock: NO_DISCOUNT_PRICE_BLOCK,
+        reviewSpan: MIXED_REVIEW_SPAN,
+      });
+
+    const games = parseSteamSearchHtml(html);
+
+    expect(games).toHaveLength(2);
+    expect(games.map((g) => g.appid)).toEqual([1426210, 2]);
+    expect(games[0].name).toBe("It Takes Two");
+  });
 });
