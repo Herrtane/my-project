@@ -18,7 +18,15 @@ const baseGame: Game = {
 
 describe("GameCard", () => {
   it("renders rank, name, discounted price, review percent, and tags", () => {
-    render(<GameCard game={baseGame} rank={2} onSelect={vi.fn()} />);
+    render(
+      <GameCard
+        game={baseGame}
+        rank={2}
+        onSelect={vi.fn()}
+        isFavorite={false}
+        onToggleFavorite={vi.fn()}
+      />,
+    );
 
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("Palworld")).toBeInTheDocument();
@@ -36,6 +44,8 @@ describe("GameCard", () => {
         game={{ ...baseGame, priceInitial: 0, priceFinal: 0, discountPercent: 0 }}
         rank={1}
         onSelect={vi.fn()}
+        isFavorite={false}
+        onToggleFavorite={vi.fn()}
       />,
     );
 
@@ -44,10 +54,54 @@ describe("GameCard", () => {
 
   it("calls onSelect with the game when clicked", async () => {
     const onSelect = vi.fn();
-    render(<GameCard game={baseGame} rank={2} onSelect={onSelect} />);
+    render(
+      <GameCard
+        game={baseGame}
+        rank={2}
+        onSelect={onSelect}
+        isFavorite={false}
+        onToggleFavorite={vi.fn()}
+      />,
+    );
 
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /Palworld/ }));
 
     expect(onSelect).toHaveBeenCalledWith(baseGame);
+  });
+
+  it("shows the favorite toggle as pressed when isFavorite is true", () => {
+    render(
+      <GameCard
+        game={baseGame}
+        rank={2}
+        onSelect={vi.fn()}
+        isFavorite
+        onToggleFavorite={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /즐겨찾기/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("calls onToggleFavorite without triggering onSelect when the heart is clicked", async () => {
+    const onSelect = vi.fn();
+    const onToggleFavorite = vi.fn();
+    render(
+      <GameCard
+        game={baseGame}
+        rank={2}
+        onSelect={onSelect}
+        isFavorite={false}
+        onToggleFavorite={onToggleFavorite}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /즐겨찾기/ }));
+
+    expect(onToggleFavorite).toHaveBeenCalledWith(baseGame);
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });

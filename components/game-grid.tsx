@@ -20,6 +20,10 @@ interface GameGridProps {
   status: GamesStatus;
   onSelectGame: (game: Game) => void;
   onRetry: () => void;
+  isFavorite: (appid: number) => boolean;
+  onToggleFavorite: (game: Game) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }
 
 function GameCardSkeleton() {
@@ -32,7 +36,16 @@ function GameCardSkeleton() {
   );
 }
 
-export function GameGrid({ games, status, onSelectGame, onRetry }: GameGridProps) {
+export function GameGrid({
+  games,
+  status,
+  onSelectGame,
+  onRetry,
+  isFavorite,
+  onToggleFavorite,
+  emptyTitle = "해당 장르의 게임을 찾지 못했습니다.",
+  emptyDescription = "다른 장르를 선택해보세요.",
+}: GameGridProps) {
   if (status === "loading") {
     return (
       <div className="grid grid-cols-1 gap-3 @md:grid-cols-2 @lg:grid-cols-3">
@@ -68,8 +81,8 @@ export function GameGrid({ games, status, onSelectGame, onRetry }: GameGridProps
           <EmptyMedia variant="icon">
             <SearchXIcon />
           </EmptyMedia>
-          <EmptyTitle>해당 장르의 게임을 찾지 못했습니다.</EmptyTitle>
-          <EmptyDescription>다른 장르를 선택해보세요.</EmptyDescription>
+          <EmptyTitle>{emptyTitle}</EmptyTitle>
+          <EmptyDescription>{emptyDescription}</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
@@ -83,6 +96,8 @@ export function GameGrid({ games, status, onSelectGame, onRetry }: GameGridProps
           game={game}
           rank={index + 1}
           onSelect={onSelectGame}
+          isFavorite={isFavorite(game.appid)}
+          onToggleFavorite={onToggleFavorite}
         />
       ))}
     </div>

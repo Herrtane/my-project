@@ -21,10 +21,12 @@ function game(overrides: Partial<Record<string, unknown>> = {}) {
 describe("Page", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
+    localStorage.clear();
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    localStorage.clear();
   });
 
   it("loads with the 전체 chip selected and renders the initial game list", async () => {
@@ -131,5 +133,51 @@ describe("Page", () => {
     expect(secondCallUrl).toContain("search=elden");
     expect(secondCallUrl).toContain(`genre=${encodeURIComponent("전체")}`);
     expect(await screen.findByText("Elden Ring")).toBeInTheDocument();
+  });
+
+  it("favoriting a card shows it in the 즐겨찾기 view regardless of the current genre", async () => {
+    (fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ games: [game({ name: "Counter-Strike 2" })] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ games: [game({ appid: 2, name: "Baldur's Gate 3" })] }),
+      });
+
+    render(<Page />);
+    await screen.findByText("Counter-Strike 2");
+
+    await userEvent.click(screen.getByRole("button", { name: "즐겨찾기 토글" }));
+
+    await userEvent.click(screen.getByRole("radio", { name: "RPG" }));
+    await screen.findByText("Baldur's Gate 3");
+
+    await userEvent.click(screen.getByRole("button", { name: /즐겨찾기 보기/ }));
+
+    expect(screen.getByText("Counter-Strike 2")).toBeInTheDocument();
+    expect(screen.queryByText("Baldur's Gate 3")).not.toBeInTheDocument();
+  });
+
+  it("shows a favorites-specific empty message and returns to browse view on toggle", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ games: [game()] }),
+    });
+
+    render(<Page />);
+    await screen.findByText("Counter-Strike 2");
+
+    await userEvent.click(screen.getByRole("button", { name: /즐겨찾기 보기/ }));
+
+    expect(
+      await screen.findByText("즐겨찾기한 게임이 없습니다."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Counter-Strike 2")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /즐겨찾기 보기/ }));
+
+    expect(await screen.findByText("Counter-Strike 2")).toBeInTheDocument();
   });
 });
